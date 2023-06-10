@@ -88,7 +88,7 @@ Locating 2^23 symbols: 1.653 seconds.
 
 Deleting 2^23 symbols: 0.881 seconds.
 
-Tree size without values: 2228225 kb.
+Tree size without values: 2228225 kb. (2.125 gb)
 
-Tree size with values: 2310145 kb.
+Tree size with values: 2310145 kb. (2.203 gb)
 
