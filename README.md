@@ -52,7 +52,7 @@ Useful on 64-bit systems to roughly halve memory cost.
 Define these to use 16-bit offsets instead of pointers for symbol tables.
 Offsets are multiplied by `_SYMTREE_BLOCK_SIZE`.
 Ensure symbol tables are stored end-to-end or that `_SYMTREE_BLOCK_SIZE == 1`
-Roughly quarters memory cost, (on 64-bit machines) but limits the capabilities of the library unless `_SYMTREE_BLOCK_SIZE` is set to the size of the `symtree_t` structure or higher.
+Roughly quarters memory cost, (on 64-bit machines) but limits the capabilities of the library unless `_SYMTREE_BLOCK_SIZE` is set to the size of the `symtree_t` structure or higher. (which will also require the user to implement their own malloc/free to ensure proper alignment)
 
 `#define _SYMTREE_USE_INT16_OFFSETS`
 
