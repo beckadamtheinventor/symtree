@@ -68,7 +68,7 @@ Each symbol key and value is of the format `var%X` where `%X` is set to the test
 Note: the maximum number of symbols that can be safely addressed in 32-bit offset mode is 2^31 divided by the symbol tree size in bytes.
 I have not run a performance test for the 16-bit offset mode, because this is generally intended for embedded and lospec devices, and because the number of symbols it can fit takes an insignificant amount of time performance wise on any modern hardware.
 
-# Library defaults (Intel i7-10700KF)
+## Library defaults (Intel i7-10700KF)
 
 Adding 2^23 symbols: 2.457 seconds.
 
@@ -80,7 +80,7 @@ Tree size without values: 4259842 kb. (4.06 gb)
 
 Tree size with values: 4341762 kb. (4.14gb)
 
-# 32-bit offsets (Intel i7-10700KF)
+## 32-bit offsets (Intel i7-10700KF)
 
 Adding 2^23 symbols: 1.966 seconds.
 
