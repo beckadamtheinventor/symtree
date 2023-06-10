@@ -1,7 +1,7 @@
 
 # Symtree
 
-Implements a fast string:string dictionary structure.
+Implements a fast string:string dictionary structure, that can locate a value given a key in time proportional to the key string length.
 
 ## Usage
 
