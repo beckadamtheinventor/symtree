@@ -1,15 +1,8 @@
 
-all: bosmalloc symboltable symtree
+all: test perftest
 
-bosmalloc:
-	gcc bosmalloctest.c -o bosmalloc.exe
+test:
+	gcc symtreetest.c symtree.c -o symtree
 
-hashedsymlist:
-	gcc hashedsymlisttest.c hashedsymlist.c -o hashedsymlist.exe
-
-symboltable:
-	gcc symboltabletest.c symboltable.c -o symboltable.exe
-
-symtree:
-	gcc symtreetest.c symtree.c -o symtree.exe
-
+perftest:
+	gcc symtreeperftest.c symtree.c -o symtreeperftest

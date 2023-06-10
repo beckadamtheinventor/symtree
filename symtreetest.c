@@ -1,3 +1,4 @@
+
 /**
  * symtreetest.c
  * Author:       Adam "beckadamtheinventor" Beckingham
@@ -113,4 +114,6 @@ int main(int argc, char *argv[]) {
 	free_symtree(tree);
 	return rv;
 }
+
+
 
