@@ -61,21 +61,34 @@ Roughly quarters memory cost, (on 64-bit machines) but limits the capabilities o
 
 ## Performance
 
-Performance tests on 2^23 (8388608) symbols added, located, and deleted.
+Performance tests are run with 2^23 (8388608) symbols added, located, and deleted.
+
 Each symbol key and value is of the format `var%X` where `%X` is set to the test loop counter represented in hexadecimal.
+
 Note: the maximum number of symbols that can be safely addressed in 32-bit offset mode is 2^31 divided by the symbol tree size in bytes.
 I have not run a performance test for the 16-bit offset mode, because this is generally intended for embedded and lospec devices, and because the number of symbols it can fit takes an insignificant amount of time performance wise on any modern hardware.
 
 # Library defaults (Intel i7-10700KF)
-Adding 2^23 symbols: 2.457 seconds
-Locating 2^23 symbols: 1.705 seconds
+
+Adding 2^23 symbols: 2.457 seconds.
+
+Locating 2^23 symbols: 1.705 seconds.
+
+Deleting 2^23 symbols: 0.925 seconds.
+
 Tree size without values: 4259842 kb. (4.06 gb)
+
 Tree size with values: 4341762 kb. (4.14gb)
-Took 0.925 seconds to delete 2^23 symbols in tree.
 
 # 32-bit offsets (Intel i7-10700KF)
-Adding 2^23 symbols: 1.966 seconds
-Locating 2^23 symbols: 1.653 seconds
+
+Adding 2^23 symbols: 1.966 seconds.
+
+Locating 2^23 symbols: 1.653 seconds.
+
+Deleting 2^23 symbols: 0.881 seconds.
+
 Tree size without values: 2228225 kb.
+
 Tree size with values: 2310145 kb.
-Took 0.881 seconds to delete 2^23 symbols in tree.
+
