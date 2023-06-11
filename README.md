@@ -33,8 +33,20 @@ If namelen == 0, strlen(name) will be substituted.
 
 Returns true if the symbol existed and was successfuly deleted, otherwise false.
 If namelen == 0, strlen(name) will be substituted.
+If free_value is true, the symbol value will be freed if it is not NULL.
 
-`bool del_sym(symtree_t *tbl, const char *name, size_t namelen);`
+`bool del_sym(symtree_t *tbl, const char *name, size_t namelen, bool free_value);`
+
+Sets and returns a symbol if found in the symbol tree, otherwise NULL.
+If namelen == 0, strlen(name) will be used instead.
+
+`VALUE_TYPE set_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value);`
+
+Gets a pointer to a symbol if found in the symbol tree, otherwise NULL.
+If namelen == 0, strlen(name) will be used instead.
+
+`VALUE_TYPE *find_sym_addr(symtree_t *tbl, const char *name, size_t namelen);`
+
 
 ## Configuration
 
@@ -52,7 +64,7 @@ Useful on 64-bit systems to roughly halve memory cost.
 Define these to use 16-bit offsets instead of pointers for symbol tables.
 Offsets are multiplied by `_SYMTREE_BLOCK_SIZE`.
 Ensure symbol tables are stored end-to-end or that `_SYMTREE_BLOCK_SIZE == 1`
-Roughly quarters memory cost, (on 64-bit machines) but limits the capabilities of the library unless `_SYMTREE_BLOCK_SIZE` is set to the size of the `symtree_t` structure or higher. (which will also require the user to implement their own malloc/free to ensure proper alignment)
+Roughly quarters memory cost, (on 64-bit machines) but limits the capabilities of the library unless `_SYMTREE_BLOCK_SIZE` is set to the size of the `symtree_t` structure or higher. (which will also require the user to implement their own `_malloc` and `_free` to ensure proper alignment of symbol trees)
 
 `#define _SYMTREE_USE_INT16_OFFSETS`
 
@@ -63,32 +75,37 @@ Roughly quarters memory cost, (on 64-bit machines) but limits the capabilities o
 
 Performance tests are run with 2^23 (8388608) symbols added, located, and deleted.
 
-Each symbol key and value is of the format `var%X` where `%X` is set to the test loop counter represented in hexadecimal.
+Each symbol key is of the format `var%X` where `%X` is set to the test loop counter represented in hexadecimal, and each symbol value is a pointer to an 8-character string.
+Tree size with values accounts for each usage of the 8-character string, which will be higher than what task manager shows; in practice with unique strings per symbol this discrepancy is not the case.
 
 Note: the maximum number of symbols that can be safely addressed in 32-bit offset mode is 2^31 divided by the symbol tree size in bytes.
 I have not run a performance test for the 16-bit offset mode, because this is generally intended for embedded and lospec devices, and because the number of symbols it can fit takes an insignificant amount of time performance wise on any modern hardware.
 
 ## Library defaults (Intel i7-10700KF)
 
-Adding 2^23 symbols: 2.457 seconds.
+Adding 2^23 symbols: 2.225 seconds.
 
-Locating 2^23 symbols: 1.705 seconds.
+Locating 2^23 symbols: 1.578 seconds.
 
-Deleting 2^23 symbols: 0.925 seconds.
+Locating and setting 2^23 symbols: 1.404 seconds.
+
+Deleting 2^23 symbols: 0.882 seconds.
 
 Tree size without values: 4259842 kb. (4.06 gb)
 
-Tree size with values: 4341762 kb. (4.14gb)
+Tree size with values: 4333570 kb. (4.13gb)
 
 ## 32-bit offsets (Intel i7-10700KF)
 
-Adding 2^23 symbols: 1.966 seconds.
+Adding 2^23 symbols: 1.756 seconds.
 
-Locating 2^23 symbols: 1.653 seconds.
+Locating 2^23 symbols: 1.498 seconds.
 
-Deleting 2^23 symbols: 0.881 seconds.
+Locating and setting 2^23 symbols: 1.325 seconds.
+
+Deleting 2^23 symbols: 0.859 seconds.
 
 Tree size without values: 2228225 kb. (2.125 gb)
 
-Tree size with values: 2310145 kb. (2.203 gb)
+Tree size with values: 2301953 kb. (2.195 gb)
 

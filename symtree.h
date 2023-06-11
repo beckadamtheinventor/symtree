@@ -14,7 +14,7 @@
 
 // Uncomment to use 32-bit offsets instead of pointers for symbol tables.
 // useful on 64-bit systems to roughly halve memory cost.
-// #define _SYMTREE_USE_INT32_OFFSETS
+#define _SYMTREE_USE_INT32_OFFSETS
 
 // Uncomment to use 16-bit offsets instead of pointers for symbol tables.
 // Offsets are multiplied by _SYMTREE_BLOCK_SIZE.
@@ -98,19 +98,28 @@ size_t symtree_size(symtree_t *tbl, bool include_value_strings);
 // Allocates a symbol tree, zeroes it, and returns it. Returns NULL if failed to allocate.
 symtree_t *alloc_symtree(void);
 
-// Frees a symbol tree recursively
+// Frees a symbol tree recursively.
 void free_symtree(symtree_t *tbl);
 
 // Returns symbol if successfuly created and linked into the symbol tree, otherwise NULL.
-// If namelen == 0, strlen(name) will be substituted.
+// If namelen == 0, strlen(name) will be used instead.
 VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value);
 
 // Returns symbol if found in the symbol tree, otherwise NULL.
-// If namelen == 0, strlen(name) will be substituted.
+// If namelen == 0, strlen(name) will be used instead.
 VALUE_TYPE find_sym(symtree_t *tbl, const char *name, size_t namelen);
 
 // Returns true if the symbol existed and was successfuly deleted, otherwise false.
-// If namelen == 0, strlen(name) will be substituted.
-bool del_sym(symtree_t *tbl, const char *name, size_t namelen);
+// If namelen == 0, strlen(name) will be used instead.
+// If free_value is true, the symbol value will be freed if it is not NULL.
+bool del_sym(symtree_t *tbl, const char *name, size_t namelen, bool free_value);
+
+// Sets and returns a symbol if found in the symbol tree, otherwise NULL.
+// If namelen == 0, strlen(name) will be used instead.
+VALUE_TYPE set_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value);
+
+// Gets a pointer to a symbol if found in the symbol tree, otherwise NULL.
+// If namelen == 0, strlen(name) will be used instead.
+VALUE_TYPE *find_sym_addr(symtree_t *tbl, const char *name, size_t namelen);
 
 #endif

@@ -122,7 +122,7 @@ void free_symtree(symtree_t *tbl) {
 	_free(tbl);
 }
 
-VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE sym) {
+VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value) {
 	symtree_t *st;
 	int8_t c;
 	size_t i = 0;
@@ -143,7 +143,7 @@ VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE 
 				_WRITE_SYMBOL_TREE(tbl, c, st);
 				tbl = st;
 			}
-			return (tbl->leaf = sym);
+			return (tbl->leaf = value);
 		} else {
 			tbl = _READ_SYMBOL_TREE(tbl, c);
 			i++;
@@ -156,10 +156,38 @@ VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE 
 		return NULL;
 	}
 	_WRITE_SYMBOL_TREE(tbl, c, st);
-	return (st->leaf = sym);
+	return (st->leaf = value);
 }
 
 VALUE_TYPE find_sym(symtree_t *tbl, const char *name, size_t namelen) {
+	VALUE_TYPE *sym = find_sym_addr(tbl, name, namelen);
+	if (sym == NULL) {
+		return NULL;
+	}
+	return *sym;
+}
+
+bool del_sym(symtree_t *tbl, const char *name, size_t namelen, bool free_value) {
+	VALUE_TYPE *sym = find_sym_addr(tbl, name, namelen);
+	if (sym == NULL) {
+		return false;
+	}
+	if (free_value && *sym != NULL) {
+		free(*sym);
+	}
+	*sym = NULL;
+	return true;
+}
+
+VALUE_TYPE set_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value) {
+	VALUE_TYPE *sym = find_sym_addr(tbl, name, namelen);
+	if (sym == NULL) {
+		return NULL;
+	}
+	return (*sym = value);
+}
+
+VALUE_TYPE *find_sym_addr(symtree_t *tbl, const char *name, size_t namelen) {
 	int8_t c;
 	size_t i = 0;
 	if (namelen == 0) {
@@ -172,11 +200,11 @@ VALUE_TYPE find_sym(symtree_t *tbl, const char *name, size_t namelen) {
 			return NULL;
 		} else {
 			if (tbl->symbols[c] == NULL) {
-				return false;
+				return NULL;
 			} else {
 				tbl = _READ_SYMBOL_TREE(tbl, c);
 				if (i >= namelen) {
-					return tbl->leaf;
+					return &tbl->leaf;
 				}
 			}
 		}
@@ -184,28 +212,3 @@ VALUE_TYPE find_sym(symtree_t *tbl, const char *name, size_t namelen) {
 	return NULL;
 }
 
-bool del_sym(symtree_t *tbl, const char *name, size_t namelen) {
-	int8_t c;
-	size_t i = 0;
-	if (namelen == 0) {
-		namelen = strlen(name);
-	}
-	while (i < namelen) {
-		c = _PARSE_SYM_NAME_CHAR(name[i]);
-		i++;
-		if (c == -1) {
-			return false;
-		} else {
-			if (tbl->symbols[c] == NULL) {
-				return false;
-			} else {
-				tbl = _READ_SYMBOL_TREE(tbl, c);
-				if (i >= namelen) {
-					tbl->leaf = NULL;
-					return true;
-				}
-			}
-		}
-	}
-	return false;
-}

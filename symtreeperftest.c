@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 		start = clock();
 		for (int test=0; test<NUM_TESTS; test++) {
 			sprintf(&varname, "var%X", test);
-			if (new_sym(tree, &varname, 0, &varname) == NULL) {
+			if (new_sym(tree, &varname, 0, "abcdefgh") == NULL) {
 				fprintf(fd, "Failed to locate symbol \"%s\".\n", &varname);
 				success = false;
 				break;
@@ -49,21 +49,34 @@ int main(int argc, char *argv[]) {
 			if (success) {
 				end = clock();
 				fprintf(fd, "Took %f seconds to locate %d symbols in tree.\n", (end-start) / (float)CLOCKS_PER_SEC, NUM_TESTS);
-				treesize = symtree_size(tree, false);
-				fprintf(fd, "Tree size: %d kb.\n", treesize/1024);
-				treesize = symtree_size(tree, true);
-				fprintf(fd, "Tree size +values: %d kb.\n", treesize/1024);
 				start = clock();
 				for (int test=0; test<NUM_TESTS; test++) {
 					sprintf(&varname, "var%X", test);
-					if (del_sym(tree, &varname, 0) == false) {
-						fprintf(fd, "Failed to delete symbol \"%s\".\n", &varname);
+					if (set_sym(tree, &varname, 0, "abcdefgh") == NULL) {
+						fprintf(fd, "Failed to locate symbol \"%s\".\n", &varname);
 						success = false;
 						break;
 					}
 				}
-				end = clock();
-				fprintf(fd, "Took %f seconds to delete %d symbols in tree.\n", (end-start) / (float)CLOCKS_PER_SEC, NUM_TESTS);
+				if (success) {
+					end = clock();
+					fprintf(fd, "Took %f seconds to locate and set %d symbols in tree.\n", (end-start) / (float)CLOCKS_PER_SEC, NUM_TESTS);
+					treesize = symtree_size(tree, false);
+					fprintf(fd, "Tree size: %d kb.\n", treesize/1024);
+					treesize = symtree_size(tree, true);
+					fprintf(fd, "Tree size +values: %d kb.\n", treesize/1024);
+					start = clock();
+					for (int test=0; test<NUM_TESTS; test++) {
+						sprintf(&varname, "var%X", test);
+						if (del_sym(tree, &varname, 0, false) == false) {
+							fprintf(fd, "Failed to delete symbol \"%s\".\n", &varname);
+							success = false;
+							break;
+						}
+					}
+					end = clock();
+					fprintf(fd, "Took %f seconds to delete %d symbols in tree.\n", (end-start) / (float)CLOCKS_PER_SEC, NUM_TESTS);
+				}
 			}
 		}
 		free_symtree(tree);
