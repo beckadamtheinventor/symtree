@@ -1,5 +1,5 @@
 *.exe
-symtreedump*.txt
+*dump*.txt
 symtreeresults*.txt
 symtreeperftest*.txt
 local

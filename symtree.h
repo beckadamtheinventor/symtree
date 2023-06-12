@@ -80,6 +80,18 @@ typedef struct _symtree {
 #endif
 #endif
 
+#ifndef _SYM_NULL
+#ifdef _SYMTREE_USE_INT32_OFFSETS
+#define _SYM_NULL 0
+#else
+#ifdef _SYMTREE_USE_INT16_OFFSETS
+#define _SYM_NULL 0
+#else
+#define _SYM_NULL NULL
+#endif
+#endif
+#endif
+
 #ifndef _malloc
 #define _malloc malloc
 #endif

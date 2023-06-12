@@ -13,14 +13,14 @@
 
 bool dump_symtree(symtree_t *tree, uint8_t *buffer, size_t bufferlen, size_t *len) {
 	size_t curlen = 0;
-	uint8_t i = 0;
+	size_t i = 0;
 	if (curlen + 1 >= bufferlen) {
 		*len = bufferlen;
 		return false;
 	}
 	buffer[curlen++] = '[';
 	for (i=0; i<_SYMTREE_NUM_CHARS; i++) {
-		if (tree->symbols[i] != NULL) {
+		if (tree->symbols[i] != _SYM_NULL) {
 			size_t newlen;
 			if (curlen + 2 >= bufferlen) {
 				*len = bufferlen;
@@ -91,7 +91,7 @@ bool dump_symtree(symtree_t *tree, uint8_t *buffer, size_t bufferlen, size_t *le
 size_t symtree_size(symtree_t *tbl, bool include_value_strings) {
 	size_t len = sizeof(symtree_t);
 	for (uint8_t i=0; i<_SYMTREE_NUM_CHARS; i++) {
-		if (tbl->symbols[i] != NULL) {
+		if (tbl->symbols[i] != _SYM_NULL) {
 			len += symtree_size(_READ_SYMBOL_TREE(tbl, i), include_value_strings);
 		}
 	}
@@ -115,7 +115,7 @@ symtree_t *alloc_symtree(void) {
 
 void free_symtree(symtree_t *tbl) {
 	for (uint8_t c=0; c<_SYMTREE_NUM_CHARS; c++) {
-		if (tbl->symbols[c] != NULL) {
+		if (tbl->symbols[c] != _SYM_NULL) {
 			free_symtree(_READ_SYMBOL_TREE(tbl, c));
 		}
 	}
@@ -133,7 +133,7 @@ VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE 
 		c = _PARSE_SYM_NAME_CHAR(name[i]);
 		if (c == -1)
 			return NULL;
-		if (tbl->symbols[c] == NULL) {
+		if (tbl->symbols[c] == _SYM_NULL) {
 			while (i < namelen) {
 				if ((st = alloc_symtree()) == NULL) {
 					return NULL;
@@ -149,7 +149,7 @@ VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE 
 			i++;
 		}
 	}
-	if (tbl->symbols[c] != NULL) {
+	if (tbl->symbols[c] != _SYM_NULL) {
 		free_symtree(_READ_SYMBOL_TREE(tbl, c));
 	}
 	if ((st = alloc_symtree()) == NULL) {
@@ -199,7 +199,7 @@ VALUE_TYPE *find_sym_addr(symtree_t *tbl, const char *name, size_t namelen) {
 		if (c == -1) {
 			return NULL;
 		} else {
-			if (tbl->symbols[c] == NULL) {
+			if (tbl->symbols[c] == _SYM_NULL) {
 				return NULL;
 			} else {
 				tbl = _READ_SYMBOL_TREE(tbl, c);
