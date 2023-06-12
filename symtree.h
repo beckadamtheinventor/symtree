@@ -14,7 +14,7 @@
 
 // Uncomment to use 32-bit offsets instead of pointers for symbol tables.
 // useful on 64-bit systems to roughly halve memory cost.
-#define _SYMTREE_USE_INT32_OFFSETS
+// #define _SYMTREE_USE_INT32_OFFSETS
 
 // Uncomment to use 16-bit offsets instead of pointers for symbol tables.
 // Offsets are multiplied by _SYMTREE_BLOCK_SIZE.
