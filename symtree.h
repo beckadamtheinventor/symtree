@@ -126,6 +126,12 @@ typedef struct _symtree {
 // @returns Created and zeroed symbol tree. Returns NULL if failed to allocate memory.
 static symtree_t *alloc_symtree(void);
 
+// Clone a symbol tree recursively.
+// @param tree Symbol tree to clone.
+// @returns Cloned symbol tree. Returns NULL if failed to allocate memory.
+// NOTE: NOT YET IMPLEMENTED.
+static symtree_t *clone_symtree(symtree_t *tree);
+
 // Locate a symbol and return its value.
 // @param tree Symbol tree to search.
 // @param name Dictionary key to search for.
@@ -171,7 +177,7 @@ static bool del_sym(symtree_t *tree, const char *name, size_t namelen, bool free
 // @returns Size of the symbol tree in bytes.
 static size_t symtree_size(symtree_t *tree, bool include_value_strings);
 
-// Dump a symbol tree to a semi-readable text format
+// Dump a symbol tree to a semi-readable text format into a buffer for debugging the tree structure.
 // @param tree Symbol tree to dump.
 // @param buffer Buffer to dump text into.
 // @param bufferlen Length of the buffer to dump text into.
@@ -198,7 +204,7 @@ static symtree_t *load_symtree(const char *data, size_t datalen);
 // @param data Binary data to load data from.
 // @param datalen Length of binary data to load from.
 // @returns Pointer to new symbol tree if success, NULL if failed.
-static symtree_t *add_symtree(symtree_t *tree, const char *data, size_t datalen);
+static symtree_t *append_symtree(symtree_t *tree, const char *data, size_t datalen);
 
 
 // Recursive function used within dump_symtree.
@@ -330,6 +336,88 @@ static bool dump_symtree(symtree_t *tree, char *buffer, size_t bufferlen, size_t
 	return true;
 }
 
+static symtree_t *load_symtree(const char *data, size_t datalen) {
+	symtree_t *tree = alloc_symtree();
+	if (tree == NULL) {
+		return NULL;
+	}
+	return append_symtree(tree, data, datalen);
+}
+
+// Used internally by append_symtree to read quoted strings
+static char *_read_until(const char *data, size_t datalen, char end, size_t *read) {
+	char c, *str;
+	size_t i = 0;
+	while (i < datalen) {
+		c = data[i++];
+		if (c == '\\') {
+			if (i+1 >= datalen) {
+				return NULL;
+			}
+			i++;
+			c = data[i++];
+		}
+		if (c == end) {
+			break;
+		}
+	}
+	*read = i;
+	str = malloc(i);
+	if (str != NULL) {
+		if (i <= 1) {
+			return NULL;
+		}
+		memcpy(str, data, i-1);
+		str[i-1] = 0;
+	}
+	return str;
+}
+
+static symtree_t *append_symtree(symtree_t *tree, const char *data, size_t datalen) {
+	char c;
+	size_t i = 0;
+	char *key = NULL;
+	if (i+1 >= datalen) {
+		return NULL;
+	}
+	if (data[i++] != '{') {
+		return NULL;
+	}
+	while (i < datalen) {
+		c = data[i++];
+		if (c == ' ' || c == '\t' || c == '\n' || c == ':' || c == ',') {
+			continue;
+		} else if (c == '"') {
+			size_t read;
+			if (key == NULL) {
+				key = _read_until(&data[i], datalen-i, '"', &read);	
+				if (key == NULL) {
+					return NULL;
+				}
+			} else {
+				char *value = _read_until(&data[i], datalen-i, '"', &read);
+				if (value == NULL) {
+					return NULL;
+				}
+				if (strcmp(key, symtree_root_node_key)) {
+					// if not the root node, add to the tree normally
+					new_sym(tree, key, 0, value);
+				} else {
+					// if the root node, add manually to the tree
+					tree->leaf = value;
+				}
+				key = NULL;
+			}
+			i += read;
+		} else if (c == '}') {
+			break;
+		} else {
+			return NULL;
+		}
+	}
+	return tree;
+}
+
 static symtree_t *alloc_symtree(void) {
 	symtree_t *tree = _malloc(sizeof(symtree_t));
 	if (tree == NULL) {
@@ -346,6 +434,10 @@ static void free_symtree(symtree_t *tree) {
 		}
 	}
 	_free(tree);
+}
+
+static symtree_t *clone_symtree(symtree_t *tree) {
+	return NULL;
 }
 
 static bool debug_dump_symtree(symtree_t *tree, char *buffer, size_t bufferlen, size_t *len) {

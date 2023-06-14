@@ -5,31 +5,40 @@ Implements a fast string:string dictionary structure, that can locate a value gi
 
 ## Usage
 
-Dump a symbol tree's data in a somewhat readable manner into a buffer. Returns false if the buffer isn't large enough.
-
-`bool dump_symtree(symtree_t *tree, uint8_t *buffer, size_t bufferlen, size_t *len);`
-
-Return the size in bytes of a symbol tree recursively. if include_value_strings == true, include the length in bytes of string values.
-
-`size_t symtree_size(symtree_t *tbl, bool include_value_strings);`
 
 Allocates a symbol tree, zeroes it, and returns it. Returns NULL if failed to allocate.
 
 `symtree_t *alloc_symtree(void);`
 
+
 Frees a symbol tree recursively
 
 `void free_symtree(symtree_t *tbl);`
+
+
+Returns symbol if found in the symbol tree, otherwise NULL.
+If namelen == 0, strlen(name) will be substituted.
+
+`VALUE_TYPE find_sym(symtree_t *tbl, const char *name, size_t namelen);`
+
+
+Gets a pointer to a symbol if found in the symbol tree, otherwise NULL.
+If namelen == 0, strlen(name) will be used instead.
+
+`VALUE_TYPE *find_sym_addr(symtree_t *tbl, const char *name, size_t namelen);`
+
 
 Returns symbol if successfuly created and linked into the symbol tree, otherwise NULL.
 If namelen == 0, strlen(name) will be substituted.
 
 `VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value);`
 
-Returns symbol if found in the symbol tree, otherwise NULL.
-If namelen == 0, strlen(name) will be substituted.
 
-`VALUE_TYPE find_sym(symtree_t *tbl, const char *name, size_t namelen);`
+Sets and returns a symbol if found in the symbol tree, otherwise NULL.
+If namelen == 0, strlen(name) will be used instead.
+
+`VALUE_TYPE set_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value);`
+
 
 Returns true if the symbol existed and was successfuly deleted, otherwise false.
 If namelen == 0, strlen(name) will be substituted.
@@ -37,15 +46,30 @@ If free_value is true, the symbol value will be freed if it is not NULL.
 
 `bool del_sym(symtree_t *tbl, const char *name, size_t namelen, bool free_value);`
 
-Sets and returns a symbol if found in the symbol tree, otherwise NULL.
-If namelen == 0, strlen(name) will be used instead.
 
-`VALUE_TYPE set_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value);`
+Return the size in bytes of a symbol tree recursively. if include_value_strings == true, include the length in bytes of string values.
 
-Gets a pointer to a symbol if found in the symbol tree, otherwise NULL.
-If namelen == 0, strlen(name) will be used instead.
+`size_t symtree_size(symtree_t *tbl, bool include_value_strings);`
 
-`VALUE_TYPE *find_sym_addr(symtree_t *tbl, const char *name, size_t namelen);`
+
+Dump a symbol tree's data in a semi-readable text format into a buffer for debugging the tree structure. Returns false if the buffer isn't large enough.
+
+`bool debug_dump_symtree(symtree_t *tree, uint8_t *buffer, size_t bufferlen, size_t *len);`
+
+
+Dump a symbol tree's data in json format into a buffer. Returns false if the buffer isn't large enough.
+
+`bool dump_symtree(symtree_t *tree, uint8_t *buffer, size_t bufferlen, size_t *len);`
+
+
+Load a symbol tree from json format. Returns a pointer to a new symbol tree, or NULL if failed.
+
+`static symtree_t *load_symtree(const char *data, size_t datalen);`
+
+
+Append symbols to a symbol tree from json format. Returns a pointer to the symbol tree, or NULL if failed.
+
+`static symtree_t *append_symtree(symtree_t *tree, const char *data, size_t datalen);`
 
 
 ## Configuration

@@ -26,9 +26,10 @@ char buffer[256];
 
 int main(int argc, char *argv[]) {
 	int rv = 0;
-	FILE *fd;
+	FILE *fd, *fd2;
 	size_t bufferlen, treesize;
 	char *sym;
+	char *allocatedbuffer;
 	symtree_t *tree = alloc_symtree();
 
 	sym = new_sym(tree, var_HelloWorld, 0, str_HelloWorld);
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (dump_symtree(tree, &buffer, sizeof(buffer), &bufferlen)) {
-		if ((fd = fopen("symtreedump1.json", "wb"))) {
+		if ((fd = fopen("symtreedump1.json", "w"))) {
 			fwrite(&buffer, bufferlen, 1, fd);
 			fclose(fd);
 		}
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]) {
 		printf("Failed to dump symtree!\n");
 	}
 
-	if ((fd = fopen("symtreeresults.txt", "wb"))) {
+	if ((fd = fopen("symtreeresults.txt", "w"))) {
 		if (rv != 0) {
 			fprintf(fd, "Failed to init symbol %d in symtree.\n", rv);
 		} else {
@@ -113,22 +114,52 @@ int main(int argc, char *argv[]) {
 		fprintf(fd, "Final symtree size = %u bytes.\n", treesize);
 		treesize = symtree_size(tree, true);
 		fprintf(fd, "Final symtree size (+values) = %u bytes.\n", treesize);
+
+		if (dump_symtree(tree, &buffer, sizeof(buffer), &bufferlen)) {
+			if ((fd2 = fopen("symtreedump2.json", "w"))) {
+				fwrite(&buffer, bufferlen, 1, fd2);
+				fclose(fd2);
+			}
+		} else if (bufferlen > 0) {
+			printf("Failed to dump symtree due to the buffer not being large enough!\n");
+		} else {
+			printf("Failed to dump symtree!\n");
+		}
+
+		free_symtree(tree);
+
+		if ((fd2 = fopen("symtreedump1.json", "r"))) {
+			size_t len;
+			fseek(fd2, 0, 2);
+			len = ftell(fd2);
+			fseek(fd2, 0, 0);
+			if ((allocatedbuffer = malloc(len))) {
+				fread(allocatedbuffer, len, 1, fd2);
+			}
+			fclose(fd2);
+			if (allocatedbuffer != NULL) {
+				tree = load_symtree(allocatedbuffer, len);
+				free(allocatedbuffer);
+				treesize = symtree_size(tree, true);
+				fprintf(fd, "Successfuly loaded symbols from symtreedump1.json, totalling %u bytes.\n", treesize);
+				if (dump_symtree(tree, &buffer, sizeof(buffer), &bufferlen)) {
+					if ((fd2 = fopen("symtreedump3.json", "w"))) {
+						fwrite(&buffer, bufferlen, 1, fd2);
+						fclose(fd2);
+					}
+				} else if (bufferlen > 0) {
+					printf("Failed to dump symtree due to the buffer not being large enough!\n");
+				} else {
+					printf("Failed to dump symtree!\n");
+				}
+				free_symtree(tree);
+			} else {
+				fprintf(fd, "Failed to load symbols from symtreedump1.json due to insufficient memory.\n");
+			}
+		}
 		fclose(fd);
 	}
-
-	if (dump_symtree(tree, &buffer, sizeof(buffer), &bufferlen)) {
-		if ((fd = fopen("symtreedump2.json", "wb"))) {
-			fwrite(&buffer, bufferlen, 1, fd);
-			fclose(fd);
-		}
-	} else if (bufferlen > 0) {
-		printf("Failed to dump symtree due to the buffer not being large enough!\n");
-	} else {
-		printf("Failed to dump symtree!\n");
-	}
-
 	
-	free_symtree(tree);
 	return rv;
 }
 
