@@ -1,6 +1,7 @@
 *.exe
 *dump*.txt
 symtreeresults*.txt
+dictionarydump*.json
 symtreedump*.json
 symtreeperftest*.txt
 symtreeperftest*.json

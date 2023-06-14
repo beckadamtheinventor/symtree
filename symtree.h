@@ -26,11 +26,11 @@
 
 
 // Define this to enable json pretty-printing
-// #define _SYMTREE_DUMP_PRETTY_JSON
+#define _SYMTREE_DUMP_PRETTY_JSON
 
 // File header and footer for json dump files
 #ifdef _SYMTREE_DUMP_PRETTY_JSON
-const char *symtree_file_header = "{\n";
+const char *symtree_file_header = "{";
 const char *symtree_file_footer = "\n}";
 #else
 const char *symtree_file_header = "{";
@@ -207,7 +207,7 @@ static symtree_t *load_symtree(const char *data, size_t datalen);
 static symtree_t *append_symtree(symtree_t *tree, const char *data, size_t datalen);
 
 
-// Recursive function used within dump_symtree.
+// Recursive function used internally within dump_symtree.
 static bool _dump_symtree(symtree_t *tree, char *buffer, size_t bufferlen, size_t *len, const char *prefix) {
 	size_t i = 0, prefixlen = 0, newlen, curlen = 0;
 	char *newprefix;
@@ -222,7 +222,7 @@ static bool _dump_symtree(symtree_t *tree, char *buffer, size_t bufferlen, size_
 		buffer[curlen++] = '\t';
 #endif
 		if (prefix == NULL) {
-			// printf("Found data node %s\n", &symtree_root_node_key);
+			// printf("Found data node %s\n", symtree_root_node_key);
 			if (curlen + strlen(symtree_root_node_key) + 4 >= bufferlen) {
 				*len = curlen;
 				return false;
@@ -348,6 +348,7 @@ static symtree_t *load_symtree(const char *data, size_t datalen) {
 static char *_read_until(const char *data, size_t datalen, char end, size_t *read) {
 	char c, *str;
 	size_t i = 0;
+	
 	while (i < datalen) {
 		c = data[i++];
 		if (c == '\\') {
@@ -355,9 +356,7 @@ static char *_read_until(const char *data, size_t datalen, char end, size_t *rea
 				return NULL;
 			}
 			i++;
-			c = data[i++];
-		}
-		if (c == end) {
+		} else if (c == end) {
 			break;
 		}
 	}
@@ -394,6 +393,7 @@ static symtree_t *append_symtree(symtree_t *tree, const char *data, size_t datal
 				if (key == NULL) {
 					return NULL;
 				}
+				// printf("Got key %s\n", key);
 			} else {
 				char *value = _read_until(&data[i], datalen-i, '"', &read);
 				if (value == NULL) {
@@ -406,6 +406,7 @@ static symtree_t *append_symtree(symtree_t *tree, const char *data, size_t datal
 					// if the root node, add manually to the tree
 					tree->leaf = value;
 				}
+				free(key);
 				key = NULL;
 			}
 			i += read;
@@ -540,33 +541,40 @@ static VALUE_TYPE new_sym(symtree_t *tree, const char *name, size_t namelen, VAL
 	if (namelen == 0) {
 		namelen = strlen(name);
 	}
-	while (i < namelen) {
-		c = _PARSE_SYM_NAME_CHAR(name[i]);
-		if (c == -1)
-			return NULL;
-		if (tree->symbols[c] == _SYM_NULL) {
-			while (i < namelen) {
-				if ((st = alloc_symtree()) == NULL) {
-					return NULL;
+	if (namelen > 1) {
+		while (i < namelen) {
+			c = _PARSE_SYM_NAME_CHAR(name[i]);
+			if (c == -1)
+				return NULL;
+			if (tree->symbols[c] == _SYM_NULL) {
+				while (i < namelen) {
+					if ((st = alloc_symtree()) == NULL) {
+						return NULL;
+					}
+					c = _PARSE_SYM_NAME_CHAR(name[i]);
+					i++;
+					_WRITE_SYMBOL_TREE(tree, c, st);
+					tree = st;
 				}
-				c = _PARSE_SYM_NAME_CHAR(name[i]);
+				return (tree->leaf = value);
+			} else {
+				tree = _READ_SYMBOL_TREE(tree, c);
 				i++;
-				_WRITE_SYMBOL_TREE(tree, c, st);
-				tree = st;
 			}
-			return (tree->leaf = value);
-		} else {
-			tree = _READ_SYMBOL_TREE(tree, c);
-			i++;
 		}
+	} else if (namelen > 0) {
+		c = _PARSE_SYM_NAME_CHAR(name[0]);
+	} else {
+		return (tree->leaf = value);
 	}
-	if (tree->symbols[c] != _SYM_NULL) {
-		free_symtree(_READ_SYMBOL_TREE(tree, c));
+	if (tree->symbols[c] == _SYM_NULL) {
+		if ((st = alloc_symtree()) == NULL) {
+			return NULL;
+		}
+		_WRITE_SYMBOL_TREE(tree, c, st);
+	} else {
+		st = _READ_SYMBOL_TREE(tree, c);
 	}
-	if ((st = alloc_symtree()) == NULL) {
-		return NULL;
-	}
-	_WRITE_SYMBOL_TREE(tree, c, st);
 	return (st->leaf = value);
 }
 

@@ -8,9 +8,9 @@
 #define _SYMTREE_USE_INT32_OFFSETS
 // #define _SYMTREE_BLOCK_SIZE 8
 
-#define _PARSE_SYM_NAME_CHAR(c) ((c)=='-' ? 37 : ((c)==' ' ? 36 : ((unsigned)(c)-'A'<26 ? (c)-'A' : ((unsigned)(c)-'a'<26 ? (c)-'a' : ((unsigned)(c)-'0'<10 ? (c)+26-'0' : -1)))))
-#define _UNPARSE_SYM_NAME_CHAR(c) ((c)==37 ? '-' : ((c)==36 ? ' ' : ((unsigned)(c)<26 ? (c)+'A' : ((unsigned)(c)-26<10 ? (c)+'0'-26 : -1))))
-#define _SYMTREE_NUM_CHARS 38
+#define _PARSE_SYM_NAME_CHAR(c) ((c)=='-' ? 27 : ((c)==' ' ? 26 : ((unsigned)(c)-'A'<26 ? (c)-'A' : ((unsigned)(c)-'a'<26 ? (c)-'a' : -1))))
+#define _UNPARSE_SYM_NAME_CHAR(c) ((c)==27 ? '-' : ((c)==26 ? ' ' : ((unsigned)(c)<26 ? (c)+'A' : -1)))
+#define _SYMTREE_NUM_CHARS 28
 #include "../symtree.h"
 
 int main(int argc, char **argv) {
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 	treesize = symtree_size(tree, true) / 1024;
 	printf("Successfuly added json to tree, totalling %u kb. (%f gb)\n", treesize, (double)treesize/(1024*1024.0f));
 
-	if ((fd = fopen("dictionarydump.txt", "wb")) != NULL) {
+	if ((fd = fopen("dictionarydump.json", "wb")) != NULL) {
 		#define BUFFER_LEN (24*1024*1024)
 		size_t buffer_len = 0;
 		uint8_t *buffer = malloc(BUFFER_LEN);
@@ -72,11 +72,16 @@ int main(int argc, char **argv) {
 	{
 		char inputstr[512];
 		do {
+			clock_t start;
 			double dt;
 			printf("> ");
-			fscanf(stdin, "%s", inputstr);
+			fscanf(stdin, "%s", &inputstr);
 			if (*inputstr != 0) {
-				clock_t start = clock();
+				char *ptr;
+				while (ptr = strchr(&inputstr, '_')) {
+					*ptr = ' ';
+				}
+				start = clock();
 				for (int n=0; n<9999999; n++) {
 					find_sym(tree, inputstr, 0);
 				}
