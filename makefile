@@ -2,7 +2,7 @@
 all: test perftest
 
 test:
-	gcc symtreetest.c symtree.c -o symtree
+	gcc symtreetest.c -o symtree
 
 perftest:
-	gcc symtreeperftest.c symtree.c -o symtreeperftest
+	gcc symtreeperftest.c -o symtreeperftest

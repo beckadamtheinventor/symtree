@@ -100,38 +100,205 @@ typedef struct _symtree {
 #define _free free
 #endif
 
+static bool dump_symtree(symtree_t *tree, uint8_t *buffer, size_t bufferlen, size_t *len) {
+	size_t curlen = 0;
+	size_t i = 0;
+	if (curlen + 1 >= bufferlen) {
+		*len = bufferlen;
+		return false;
+	}
+	buffer[curlen++] = '[';
+	for (i=0; i<_SYMTREE_NUM_CHARS; i++) {
+		if (tree->symbols[i] != _SYM_NULL) {
+			size_t newlen;
+			if (curlen + 2 >= bufferlen) {
+				*len = bufferlen;
+				return false;
+			}
+			buffer[curlen++] = _UNPARSE_SYM_NAME_CHAR(i);
+			buffer[curlen++] = '{';
+			if (curlen + 1 >= bufferlen) {
+				*len = bufferlen;
+				return false;
+			}
+			buffer[curlen++] = '\n';
+			if (!dump_symtree(_READ_SYMBOL_TREE(tree, i), &buffer[curlen], bufferlen-curlen, &newlen)) {
+				return false;
+			}
+			curlen += newlen;
+			if (curlen + 3 >= bufferlen) {
+				*len = bufferlen;
+				return false;
+			}
+			buffer[curlen++] = '}';
+			buffer[curlen++] = ',';
+			buffer[curlen++] = '\n';
+		}
+	}
+	if (curlen + 1 >= bufferlen) {
+		*len = bufferlen;
+		return false;
+	}
+	buffer[curlen++] = ']';
+	if (tree->leaf != NULL) {
+		char c;
+		if (curlen + 3 >= bufferlen) {
+			*len = bufferlen;
+			return false;
+		}
+		buffer[curlen++] = '=';
+		buffer[curlen++] = '"';
+		i = 0;
+		while ((c = tree->leaf[i++]) != 0) {
+			if (c == '\n' || c == '\t' || c == '"') {
+				if (curlen + 2 >= bufferlen) {
+					*len = bufferlen;
+					return false;
+				}
+				buffer[curlen++] = '\\';
+				if (c == '\n') {
+					buffer[curlen++] = 'n';
+				} else if (c == '\t') {
+					buffer[curlen++] = 't';
+				} else {
+					buffer[curlen++] = c;
+				}
+			} else {
+				if (curlen + 1 >= bufferlen) {
+					*len = bufferlen;
+					return false;
+				}
+				buffer[curlen++] = c;
+			}
+		}
+		buffer[curlen++] = '"';
+	}
+	*len = curlen;
+	return true;
+}
 
-// Dump a symbol tree's data in a somewhat readable manner into a buffer. Returns false if the buffer isn't large enough.
-bool dump_symtree(symtree_t *tree, uint8_t *buffer, size_t bufferlen, size_t *len);
+static size_t symtree_size(symtree_t *tbl, bool include_value_strings) {
+	size_t len = sizeof(symtree_t);
+	for (uint8_t i=0; i<_SYMTREE_NUM_CHARS; i++) {
+		if (tbl->symbols[i] != _SYM_NULL) {
+			len += symtree_size(_READ_SYMBOL_TREE(tbl, i), include_value_strings);
+		}
+	}
+	if (tbl->leaf != NULL) {
+		len += sizeof(VALUE_TYPE);
+		if (include_value_strings) {
+			len += strlen(tbl->leaf) + 1;
+		}
+	}
+	return len;
+}
 
-// Return the size in bytes of a symbol tree recursively. if include_value_strings == true, include the length in bytes of string values.
-size_t symtree_size(symtree_t *tbl, bool include_value_strings);
+static symtree_t *alloc_symtree(void) {
+	symtree_t *tree = _malloc(sizeof(symtree_t));
+	if (tree == NULL) {
+		return NULL;
+	}
+	memset(tree, 0, sizeof(symtree_t));
+	return tree;
+}
 
-// Allocates a symbol tree, zeroes it, and returns it. Returns NULL if failed to allocate.
-symtree_t *alloc_symtree(void);
+static void free_symtree(symtree_t *tbl) {
+	for (uint8_t c=0; c<_SYMTREE_NUM_CHARS; c++) {
+		if (tbl->symbols[c] != _SYM_NULL) {
+			free_symtree(_READ_SYMBOL_TREE(tbl, c));
+		}
+	}
+	_free(tbl);
+}
 
-// Frees a symbol tree recursively.
-void free_symtree(symtree_t *tbl);
+static VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value) {
+	symtree_t *st;
+	int8_t c;
+	size_t i = 0;
+	if (namelen == 0) {
+		namelen = strlen(name);
+	}
+	while (i < namelen) {
+		c = _PARSE_SYM_NAME_CHAR(name[i]);
+		if (c == -1)
+			return NULL;
+		if (tbl->symbols[c] == _SYM_NULL) {
+			while (i < namelen) {
+				if ((st = alloc_symtree()) == NULL) {
+					return NULL;
+				}
+				c = _PARSE_SYM_NAME_CHAR(name[i]);
+				i++;
+				_WRITE_SYMBOL_TREE(tbl, c, st);
+				tbl = st;
+			}
+			return (tbl->leaf = value);
+		} else {
+			tbl = _READ_SYMBOL_TREE(tbl, c);
+			i++;
+		}
+	}
+	if (tbl->symbols[c] != _SYM_NULL) {
+		free_symtree(_READ_SYMBOL_TREE(tbl, c));
+	}
+	if ((st = alloc_symtree()) == NULL) {
+		return NULL;
+	}
+	_WRITE_SYMBOL_TREE(tbl, c, st);
+	return (st->leaf = value);
+}
 
-// Returns symbol if successfuly created and linked into the symbol tree, otherwise NULL.
-// If namelen == 0, strlen(name) will be used instead.
-VALUE_TYPE new_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value);
+static VALUE_TYPE find_sym(symtree_t *tbl, const char *name, size_t namelen) {
+	VALUE_TYPE *sym = find_sym_addr(tbl, name, namelen);
+	if (sym == NULL) {
+		return NULL;
+	}
+	return *sym;
+}
 
-// Returns symbol if found in the symbol tree, otherwise NULL.
-// If namelen == 0, strlen(name) will be used instead.
-VALUE_TYPE find_sym(symtree_t *tbl, const char *name, size_t namelen);
+static bool del_sym(symtree_t *tbl, const char *name, size_t namelen, bool free_value) {
+	VALUE_TYPE *sym = find_sym_addr(tbl, name, namelen);
+	if (sym == NULL) {
+		return false;
+	}
+	if (free_value && *sym != NULL) {
+		free(*sym);
+	}
+	*sym = NULL;
+	return true;
+}
 
-// Returns true if the symbol existed and was successfuly deleted, otherwise false.
-// If namelen == 0, strlen(name) will be used instead.
-// If free_value is true, the symbol value will be freed if it is not NULL.
-bool del_sym(symtree_t *tbl, const char *name, size_t namelen, bool free_value);
+static VALUE_TYPE set_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value) {
+	VALUE_TYPE *sym = find_sym_addr(tbl, name, namelen);
+	if (sym == NULL) {
+		return NULL;
+	}
+	return (*sym = value);
+}
 
-// Sets and returns a symbol if found in the symbol tree, otherwise NULL.
-// If namelen == 0, strlen(name) will be used instead.
-VALUE_TYPE set_sym(symtree_t *tbl, const char *name, size_t namelen, VALUE_TYPE value);
-
-// Gets a pointer to a symbol if found in the symbol tree, otherwise NULL.
-// If namelen == 0, strlen(name) will be used instead.
-VALUE_TYPE *find_sym_addr(symtree_t *tbl, const char *name, size_t namelen);
+static VALUE_TYPE *find_sym_addr(symtree_t *tbl, const char *name, size_t namelen) {
+	int8_t c;
+	size_t i = 0;
+	if (namelen == 0) {
+		namelen = strlen(name);
+	}
+	while (i < namelen) {
+		c = _PARSE_SYM_NAME_CHAR(name[i]);
+		i++;
+		if (c == -1) {
+			return NULL;
+		} else {
+			if (tbl->symbols[c] == _SYM_NULL) {
+				return NULL;
+			} else {
+				tbl = _READ_SYMBOL_TREE(tbl, c);
+				if (i >= namelen) {
+					return &tbl->leaf;
+				}
+			}
+		}
+	}
+	return NULL;
+}
 
 #endif
