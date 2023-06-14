@@ -62,9 +62,9 @@ int main(int argc, char *argv[]) {
 					end = clock();
 					fprintf(fd, "Took %f seconds to locate and set %d symbols in tree.\n", (end-start) / (float)CLOCKS_PER_SEC, NUM_TESTS);
 					treesize = symtree_size(tree, false);
-					fprintf(fd, "Tree size: %d kb.\n", treesize/1024);
+					fprintf(fd, "Tree size: %d kb. (%f gb)\n", treesize/1024, treesize/(1024*1024*1024.0f));
 					treesize = symtree_size(tree, true);
-					fprintf(fd, "Tree size +values: %d kb.\n", treesize/1024);
+					fprintf(fd, "Tree size +values: %d kb. (%f gb)\n", treesize/1024, treesize/(1024*1024*1024.0f));
 					start = clock();
 					for (int test=0; test<NUM_TESTS; test++) {
 						sprintf(&varname, "var%X", test);
@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
 		free_symtree(tree);
 		fclose(fd);
 	}
+	printf("Success. Results in \"symtreeperftest.txt\".\n");
 	return 0;
 }
 

@@ -22,7 +22,7 @@ const char *var_HowAreYou = "HowAreYou";
 const char *var_IAmWell = "IAmWell";
 const char *var_NumStrings = "NumStrings";
 
-uint8_t buffer[65536*4];
+uint8_t buffer[80];
 
 int main(int argc, char *argv[]) {
 	int rv = 0;
@@ -52,10 +52,15 @@ int main(int argc, char *argv[]) {
 		rv = 1;
 	}
 
-	dump_symtree(tree, buffer, sizeof(buffer), &bufferlen);
-	if ((fd = fopen("symtreedump1.txt", "wb"))) {
-		fwrite(&buffer, bufferlen, 1, fd);
-		fclose(fd);
+	if (dump_symtree(tree, buffer, sizeof(buffer), &bufferlen)) {
+		if ((fd = fopen("symtreedump1.json", "wb"))) {
+			fwrite(&buffer, bufferlen, 1, fd);
+			fclose(fd);
+		}
+	} else if (bufferlen > 0) {
+		fprintf(fd, "Failed to dump symtree due to the buffer not being large enough!\n");
+	} else {
+		fprintf(fd, "Failed to dump symtree!\n");
 	}
 
 	if ((fd = fopen("symtreeresults.txt", "wb"))) {
@@ -111,11 +116,17 @@ int main(int argc, char *argv[]) {
 		fclose(fd);
 	}
 
-	dump_symtree(tree, buffer, sizeof(buffer), &bufferlen);
-	if ((fd = fopen("symtreedump2.txt", "wb"))) {
-		fwrite(&buffer, bufferlen, 1, fd);
-		fclose(fd);
+	if (dump_symtree(tree, buffer, sizeof(buffer), &bufferlen)) {
+		if ((fd = fopen("symtreedump2.json", "wb"))) {
+			fwrite(&buffer, bufferlen, 1, fd);
+			fclose(fd);
+		}
+	} else if (bufferlen > 0) {
+		fprintf(fd, "Failed to dump symtree due to the buffer not being large enough!\n");
+	} else {
+		fprintf(fd, "Failed to dump symtree!\n");
 	}
+
 	
 	free_symtree(tree);
 	return rv;
