@@ -295,6 +295,8 @@ static bool _dump_symtree(symtree_t *tree, char *buffer, size_t bufferlen, size_
 			if (_dump_symtree(_READ_SYMBOL_TREE(tree, i), &buffer[curlen], bufferlen-curlen, &newlen, newprefix)) {
 				curlen += newlen;
 			} else {
+				free(newprefix);
+				*len = curlen + newlen;
 				return false;
 			}
 		}
@@ -312,17 +314,16 @@ static bool dump_symtree(symtree_t *tree, char *buffer, size_t bufferlen, size_t
 	}
 	memcpy(buffer, symtree_file_header, strlen(symtree_file_header));
 	curlen += strlen(symtree_file_header);
-	if (!_dump_symtree(tree, &buffer[curlen], bufferlen-curlen, &newlen, NULL)) {
-		*len = 0;
-		return false;
-	}
-	curlen += newlen;
-	if (curlen + strlen(symtree_file_footer) - 2 >= bufferlen) {
-		*len = curlen;
+	if (!(_dump_symtree(tree, &buffer[curlen], bufferlen-curlen, &newlen, NULL))) {
+		*len = curlen + newlen;
 		return false;
 	}
 	if (newlen > 0) {
-		curlen -= 1; // rewind to remove extra comma
+		curlen = curlen + newlen - 1; // rewind a byte to remove extra comma
+	}
+	if (curlen + strlen(symtree_file_footer) >= bufferlen) {
+		*len = curlen;
+		return false;
 	}
 	memcpy(&buffer[curlen], symtree_file_footer, strlen(symtree_file_footer));
 	*len = curlen + strlen(symtree_file_footer);
