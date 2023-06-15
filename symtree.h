@@ -8,6 +8,10 @@
 #ifndef __SYMTREE_H__
 #define __SYMTREE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
@@ -631,4 +635,10 @@ static VALUE_TYPE *find_sym_addr(symtree_t *tree, const char *name, size_t namel
 	return NULL;
 }
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif
+
+
