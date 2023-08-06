@@ -107,13 +107,13 @@ I have not run a performance test for the 16-bit offset mode, because this is ge
 
 ## Library defaults (Intel i7-10700KF)
 
-Adding 2^23 symbols: 2.225 seconds.
+Adding 2^23 symbols: 1.6 seconds.
 
-Locating 2^23 symbols: 1.578 seconds.
+Locating 2^23 symbols: 0.904 seconds.
 
-Locating and setting 2^23 symbols: 1.404 seconds.
+Locating and setting 2^23 symbols: 0.575 seconds.
 
-Deleting 2^23 symbols: 0.882 seconds.
+Deleting 2^23 symbols: 0.317 seconds.
 
 Tree size without values: 4259842 kb. (4.06 gb)
 
@@ -121,13 +121,13 @@ Tree size with values: 4333570 kb. (4.13gb)
 
 ## 32-bit offsets (Intel i7-10700KF)
 
-Adding 2^23 symbols: 1.756 seconds.
+Adding 2^23 symbols: 1.102 seconds.
 
-Locating 2^23 symbols: 1.498 seconds.
+Locating 2^23 symbols: 0.845 seconds.
 
-Locating and setting 2^23 symbols: 1.325 seconds.
+Locating and setting 2^23 symbols: 0.534 seconds.
 
-Deleting 2^23 symbols: 0.859 seconds.
+Deleting 2^23 symbols: 0.297 seconds.
 
 Tree size without values: 2228225 kb. (2.125 gb)
 

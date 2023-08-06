@@ -46,12 +46,16 @@ const char *symtree_root_node_key = "<root>";
 
 // Convert character to dictionary key number
 #ifndef _PARSE_SYM_NAME_CHAR
-#define _PARSE_SYM_NAME_CHAR(c) ((c)=='_' ? 62 : ((unsigned)(c)-'A'<26 ? (c)-'A' : ((unsigned)(c)-'a'<26 ? (c)+26-'a' : ((unsigned)(c)-'0'<10 ? (c)+52-'0' : -1))))
+const uint8_t symtree_parse_sym_name_char_tbl[256] = {255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 255, 255, 255, 255, 255, 255, 255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 255, 255, 255, 255, 62, 255, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255};
+#define _PARSE_SYM_NAME_CHAR(c) symtree_parse_sym_name_char_tbl[c]
+#define _PARSE_SYM_NAME_CHAR_INVALID 255
 #endif
 
 // Convert dictionary key number to character
 #ifndef _UNPARSE_SYM_NAME_CHAR
-#define _UNPARSE_SYM_NAME_CHAR(c) ((c)==62 ? '_' : ((c)<26 ? (c)+'A' : ((unsigned)(c)-26<26 ? (c)+'a'-26 : ((unsigned)(c)-52<10 ? (c)+'0'-52 : -1))))
+const char symtree_unparse_sym_name_char_tbl[256] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_\xff";
+#define _UNPARSE_SYM_NAME_CHAR(c) symtree_unparse_sym_name_char_tbl[c]
+#define _UNPARSE_SYM_NAME_CHAR_INVALID 0xff
 #endif
 
 // Number of allowed characters in dictionary keys
@@ -548,7 +552,7 @@ static VALUE_TYPE new_sym(symtree_t *tree, const char *name, size_t namelen, VAL
 	if (namelen > 1) {
 		while (i < namelen) {
 			c = _PARSE_SYM_NAME_CHAR(name[i]);
-			if (c == -1)
+			if (c == _PARSE_SYM_NAME_CHAR_INVALID)
 				return NULL;
 			if (tree->symbols[c] == _SYM_NULL) {
 				while (i < namelen) {
@@ -556,6 +560,10 @@ static VALUE_TYPE new_sym(symtree_t *tree, const char *name, size_t namelen, VAL
 						return NULL;
 					}
 					c = _PARSE_SYM_NAME_CHAR(name[i]);
+					if (c == _PARSE_SYM_NAME_CHAR_INVALID) {
+						free_symtree(st);
+						return NULL;
+					}
 					i++;
 					_WRITE_SYMBOL_TREE(tree, c, st);
 					tree = st;
@@ -568,6 +576,8 @@ static VALUE_TYPE new_sym(symtree_t *tree, const char *name, size_t namelen, VAL
 		}
 	} else if (namelen > 0) {
 		c = _PARSE_SYM_NAME_CHAR(name[0]);
+		if (c == _PARSE_SYM_NAME_CHAR_INVALID)
+			return NULL;
 	} else {
 		return (tree->leaf = value);
 	}
@@ -619,7 +629,7 @@ static VALUE_TYPE *find_sym_addr(symtree_t *tree, const char *name, size_t namel
 	while (i < namelen) {
 		c = _PARSE_SYM_NAME_CHAR(name[i]);
 		i++;
-		if (c == -1) {
+		if (c == _PARSE_SYM_NAME_CHAR_INVALID) {
 			return NULL;
 		} else {
 			if (tree->symbols[c] == _SYM_NULL) {
